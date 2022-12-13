@@ -1,37 +1,29 @@
-version: "2.1"
-  
+version: '3.7'
+
 services:
     wireguard:
-      image: lscr.io/linuxserver/wireguard:latest
-      cap_add:
-          - NET_ADMIN
-          - SYS_MODULE
-      environment:
-          - PUID=1000
-          - PGID=1000
-          - TZ=Europe/London
-          - SERVERURL=mower.awiki.org
-          - SERVERPORT=51821 # this only appears to change the port in the written config, not the actual daemon, so remap it in docker ports
-          - PEERS=conf,robot0,robot1
-          - PEERDNS=1.1.1.1
-          - INTERNAL_SUBNET=10.13.13.0
-          - ALLOWEDIPS=0.0.0.0/0
-          - LOG_CONFS=true
-      volumes:
-          - ../wireguard:/config
-          - /lib/modules:/lib/modules
-      ports:
-          - 51821:51820/udp
-      sysctls:
-          - net.ipv4.conf.all.src_valid_mark=1
-      restart: unless-stopped
-      networks:
-          ros_net: 
-              ipv4_address: 10.2.0.3
+        image: lscr.io/linuxserver/wireguard
+        networks:
+            - vpn-bridge
+        volumes:
+            - ../peer_mower_srv.conf:/config/wg0.conf
+            - /lib/modules:/lib/modules
+        environment:
+            - PUID=1000
+            - PGID=1000
+        cap_add: 
+            - NET_ADMIN
+            - SYS_MODULE
+        sysctls:
+            - net.ipv4.conf.all.src_valid_mark=1
+
+    ros:
+        image: mower/ros
+        build:
+            context: ./ros
+            dockerfile: Dockerfile
+        network_mode: service:wireguard
 
 networks:
-    ros_net:
-        ipam:
-            driver: default
-            config:
-                - subnet: 10.2.0.0/24
+    vpn-bridge:
+        driver: bridge
