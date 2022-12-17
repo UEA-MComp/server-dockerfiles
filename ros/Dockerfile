@@ -3,12 +3,11 @@ MAINTAINER Eden Attenborough "gae19jtu@uea.ac.uk"
 
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 RUN apt-get update -y
-RUN apt-get install -y iputils-ping
+RUN apt-get install -y iputils-ping ros-humble-demo-nodes-cpp tmux
 
 COPY . /mower
 WORKDIR /mower
 
-# placeholder stuff...
-ENTRYPOINT ["ping"]
-CMD ["10.13.13.3"]
+ENTRYPOINT ["bash"]
+CMD ["entrypoint.sh"]
 
