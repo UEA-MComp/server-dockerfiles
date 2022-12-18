@@ -6,4 +6,3 @@ RUN apt-get update -y
 RUN apt-get install -y iputils-ping ssh
 
 ENTRYPOINT ["ssh"]
-
