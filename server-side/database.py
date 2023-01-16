@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 import datetime
 import pymysql
+import secrets
 import os
 
 SESSION_LENGTH = datetime.timedelta(days = 7)
@@ -26,7 +27,7 @@ class MowerDatabase:
         except Exception as e:
             print(e.args[1])
             if e.args[0] == 1049:
-                self.__build_db()
+                self.__connection = self.__build_db()
         return self
 
     def __exit__(self, type, value, traceback):
@@ -137,25 +138,26 @@ class MowerDatabase:
 
         return self.authenticate_user(email, pw_hashed)
 
-    def authenticate_user(self, email, pw_hashed, client_info = None):
+    def authenticate_user(self, email, pw_hashed, client_info = 'API Client'):
         with self.__connection.cursor() as cursor:
             cursor.execute("""
             SELECT user_no FROM users WHERE email = %s AND pw_hash = %s;
             """, (email, pw_hashed, ))
             try:
-                user_id = cursor.fetchone()[0]
+                user_id = int(cursor.fetchone()[0])
             except:
                 return UnauthenticatedUserException("User not found, or incorrect password")
 
             session_id = secrets.token_hex(16)
             expiration_dt = datetime.datetime.now() + SESSION_LENGTH
-            cursor.execute("""
-            INSERT INTO sessions (cookie_bytes, user_no, expire_at, client_info)
-            VALUES (%s, %s, %s, %s);"
-            """, (session_id, user_id, expiration_dt, client_info))
+            print(session_id, expiration_dt)
+            cursor.execute("INSERT INTO sessions (cookie_bytes, user_no, expire_at, client_info) VALUES (%s, %s, %s, %s);",
+                (session_id, user_id, expiration_dt, client_info), 
+            )
+
 
         self.__connection.commit()
-        return session_id    
+        return session_id, expiration_dt    
 
 class UnauthenticatedUserException(Exception):
     pass
