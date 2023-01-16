@@ -71,12 +71,18 @@ class MowerDatabase:
                 FOREIGN KEY (user_no) REFERENCES users (user_no)
             );
             """)
+            # use two separate points for whole and decimal parts
+            # because im not sure about mysql's floating point
+            # precision... we need a lot of accuracy here
             cursor.execute("""
             CREATE TABLE coords (
                 coord_id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-                x DECIMAL(3, 9) NOT NULL,
-                y DECIMAL(3, 9) NOT NULL,
-                z DECIMAL(3, 9) NOT NULL
+                x_whole INT NOT NULL,
+                x_decimal UNSIGNED BIGINT NOT NULL,
+                y_whole INT NOT NULL,
+                y_decimal UNSIGNED BIGINT NOT NULL,
+                z_whole INT NOT NULL,
+                z_decimal UNSIGNED BIGINT NOT NULL
             );
             """)
             cursor.execute("""
