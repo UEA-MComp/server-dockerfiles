@@ -105,9 +105,9 @@ class MowerDatabase:
             CREATE TABLE area_coords (
                 coord_id INT UNSIGNED NOT NULL,
                 area_id INT UNSIGNED NOT NULL,
-                PRIMARY KEY (coord_id, area_id),
                 FORIEGN KEY (coord_id) REFERENCES coords (coord_id),
-                FOREIGN KEY (area_id) REFERENCES mower_areas (area_id)
+                FOREIGN KEY (area_id) REFERENCES mower_areas (area_id),
+                PRIMARY KEY (coord_id, area_id)
             );
             """)
             cursor.execute("""
