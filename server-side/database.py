@@ -18,11 +18,14 @@ class MowerDatabase:
     """
     host: str = "db"
     user: str = "root"
-    passwd: str = os.environ["MYSQL_ROOT_PASSWORD"]
+    passwd: str = None
     db: str = "mower"
     port: int = 3306
 
     def __enter__(self):
+        if self.passwd is None:
+            self.passwd = os.environ["MYSQL_ROOT_PASSWORD"]
+            
         try:
             self.__connection = self.__get_connection()
         except Exception as e:
@@ -132,16 +135,17 @@ class MowerDatabase:
     def create_user(self, email, fname, sname, pw_hashed):
         """Appends a user to the database, then returns a new session id for this user.
 
-        # TODO: Throw some sort of exception if the email already exists
+        Todo: 
+            * Throw some sort of exception if the email already exists
 
         Arguments:
-            email {str} -- The user's email
-            fname {str} -- The user's first name
-            sname {str} -- The user's surname
-            pw_hashed {str} -- The user's password, already hashed as SHA256
+            email (str): The user's email
+            fname (str): The user's first name
+            sname (str): The user's surname
+            pw_hashed (str): The user's password, already hashed as SHA256
 
         Returns:
-            (str, datetime) -- A session id for this new user, with an expiration datetime (see ``authenticate_user``)
+            (str, datetime.datetime): A session id for this new user, with an expiration datetime (see :meth:`database.MowerDatabase.authenticate_user`)
         """
         with self.__connection.cursor() as cursor:
             cursor.execute("""
@@ -156,14 +160,14 @@ class MowerDatabase:
         """Returns a new session id for a given username and password.
 
         Arguments:
-            email {str} -- The user's email
-            pw_hashed {str} -- A user's password associated with that email, hashed as SHA256
+            email (str): The user's email
+            pw_hashed (str): A user's password associated with that email, hashed as SHA256
 
         Raises:
-            UnauthenticatedUserException -- If the username isn't found or the password is wrong
+            UnauthenticatedUserException: If the username isn't found or the password is wrong
 
         Returns:
-            (str, datetime) -- A tuple consisting of a session id, and its associated expiry datetime
+            (str, datetime): A tuple consisting of a session id, and its associated expiry datetime
         """
         with self.__connection.cursor() as cursor:
             cursor.execute("""
@@ -185,6 +189,17 @@ class MowerDatabase:
         return session_id, expiration_dt
 
     def authenticate_session(self, session_id):
+        """Returns the associated :class:`models.User` for an associated session id.
+
+        Arguments:
+            session_id (str): A session id cookie
+
+        Raises:
+            InvalidSessionException: If the session isn't found in the database, for example if it has expired
+
+        Returns:
+            models.User: An associated user model
+        """
         with self.__connection.cursor() as cursor:
             cursor.execute("""
             SELECT email, fname, sname FROM users WHERE user_no = (
