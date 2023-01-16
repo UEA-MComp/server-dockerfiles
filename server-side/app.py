@@ -18,3 +18,5 @@ if __name__ == "__main__":
 
         session_id, expires_at = db.authenticate_user("gae19jtu@uea.ac.uk", hash_pw("password"))
         print(db.authenticate_session(session_id))
+
+        print(db.authenticate_session("a"))
