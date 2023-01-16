@@ -24,6 +24,14 @@ services:
             dockerfile: Dockerfile
         network_mode: service:wireguard
 
+    server-side:
+        image: mower/serverside
+        build:
+            context: ./server-side
+            dockerfile: Dockerfile
+        env_file:
+            - db.env
+
     db:
         image: mariadb:10.10.2
         env_file:
