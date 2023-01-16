@@ -119,3 +119,6 @@ class MowerDatabase:
                 FOREIGN KEY (nogo_id) REFERENCES nogo_zones (nogo_id)
             );
             """)
+
+            self.__connection.commit()
+            return self.__connection
