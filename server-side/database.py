@@ -115,7 +115,7 @@ class MowerDatabase:
                 coord_id INT UNSIGNED NOT NULL,
                 nogo_id INT UNSIGNED NOT NULL,
                 PRIMARY KEY (coord_id, nogo_id),
-                FORIEGN KEY (coord_id) REFERENCES coords (coord_id),
+                FOREIGN KEY (coord_id) REFERENCES coords (coord_id),
                 FOREIGN KEY (nogo_id) REFERENCES nogo_zones (nogo_id)
             );
             """)
