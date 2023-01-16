@@ -78,11 +78,11 @@ class MowerDatabase:
             CREATE TABLE coords (
                 coord_id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
                 x_whole INT NOT NULL,
-                x_decimal UNSIGNED BIGINT NOT NULL,
+                x_decimal BIGINT UNSIGNED NOT NULL,
                 y_whole INT NOT NULL,
-                y_decimal UNSIGNED BIGINT NOT NULL,
+                y_decimal BIGINT UNSIGNED NOT NULL,
                 z_whole INT NOT NULL,
-                z_decimal UNSIGNED BIGINT NOT NULL
+                z_decimal BIGINT UNSIGNED NOT NULL
             );
             """)
             cursor.execute("""
