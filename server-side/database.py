@@ -58,7 +58,8 @@ class MowerDatabase:
                 user_no INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
                 email VARCHAR(50) NOT NULL,
                 fname VARCHAR(50) NOT NULL,
-                sname VARCHAR(50) NOT NULL
+                sname VARCHAR(50) NOT NULL,
+                pw_hash CHAR(64) NOT NULL
             );
             """)
             cursor.execute("""
@@ -122,3 +123,21 @@ class MowerDatabase:
 
             self.__connection.commit()
             return self.__connection
+
+    def create_user(self, email, fname, sname, pw_hashed):
+        with self.__connection.cursor() as cursor:
+            cursor.execute("""
+            INSERT INTO users (email, fname, sname, pw_hash)
+            VALUES (%s, %s %s, %s);
+            """, (email, fname, sname, pw_hashed, ))
+
+        return self.authenticate_user(email, pw_hashed)
+
+    def authenticate_user(self, email, pw_hashed):
+        with self.__connection.cursor() as cursor:
+            cursor.execute("""
+            SELECT user_no FROM users WHERE email = %s AND pw_hash = %s;
+            """, (email, pw_hashed, ))
+            user_id = self.cursor.fetchone()[0]
+
+            print(user_id)
