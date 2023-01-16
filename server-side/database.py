@@ -2,6 +2,7 @@ from dataclasses import dataclass
 import datetime
 import pymysql
 import secrets
+import models
 import os
 
 SESSION_LENGTH = datetime.timedelta(days = 7)
@@ -171,7 +172,7 @@ class MowerDatabase:
             try:
                 user_id = int(cursor.fetchone()[0])
             except:
-                return UnauthenticatedUserException("User not found, or incorrect password")
+                raise UnauthenticatedUserException("User not found, or incorrect password")
 
             session_id = secrets.token_hex(16)
             expiration_dt = datetime.datetime.now() + SESSION_LENGTH
@@ -189,7 +190,15 @@ class MowerDatabase:
             SELECT email, fname, sname FROM users WHERE user_no = (
                 SELECT user_no FROM sessions WHERE cookie_bytes = %s
             );""", (session_id, ))
-            print(cursor.fetchone())    
+            try:
+                email, fname, sname = cursor.fetchone()
+            except:
+                raise InvalidSessionException("The session id '%s' was not found in the database." % session_id)
+
+        return models.User(email, fname, sname)
 
 class UnauthenticatedUserException(Exception):
+    pass
+
+class InvalidSessionException(Exception):
     pass
