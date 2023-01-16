@@ -1,6 +1,9 @@
 from dataclasses import dataclass
+import datetime
 import pymysql
 import os
+
+SESSION_LENGTH = datetime.timedelta(days = 7)
 
 @dataclass
 class MowerDatabase:
@@ -134,11 +137,25 @@ class MowerDatabase:
 
         return self.authenticate_user(email, pw_hashed)
 
-    def authenticate_user(self, email, pw_hashed):
+    def authenticate_user(self, email, pw_hashed, client_info = None):
         with self.__connection.cursor() as cursor:
             cursor.execute("""
             SELECT user_no FROM users WHERE email = %s AND pw_hash = %s;
             """, (email, pw_hashed, ))
-            user_id = cursor.fetchone()[0]
+            try:
+                user_id = cursor.fetchone()[0]
+            except:
+                return UnauthenticatedUserException("User not found, or incorrect password")
 
-            print(user_id)
+            session_id = secrets.token_hex(16)
+            expiration_dt = datetime.datetime.now() + SESSION_LENGTH
+            cursor.execute("""
+            INSERT INTO sessions (cookie_bytes, user_no, expire_at, client_info)
+            VALUES (%s, %s, %s, %s);"
+            """, (session_id, user_id, expiration_dt, client_info))
+
+        self.__connection.commit()
+        return session_id    
+
+class UnauthenticatedUserException(Exception):
+    pass
