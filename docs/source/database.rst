@@ -3,6 +3,11 @@
 Database Classes and Functions
 ==============================
 
+.. image:: _static/er.drawio.png
+
+Classes
+*******
+
 .. autoclass:: database.MowerDatabase
    :members:
    :special-members:
