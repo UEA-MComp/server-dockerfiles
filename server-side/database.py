@@ -60,6 +60,8 @@ class MowerDatabase:
                 fname VARCHAR(50) NOT NULL,
                 sname VARCHAR(50) NOT NULL
             );
+            """)
+            cursor.execute("""
             CREATE TABLE sessions (
                 cookie_bytes CHAR(32) PRIMARY KEY,
                 user_no INT UNSIGNED NOT NULL,
@@ -68,12 +70,16 @@ class MowerDatabase:
                 client_info TEXT,
                 FOREIGN KEY (user_no) REFERENCES users (user_no)
             );
+            """)
+            cursor.execute("""
             CREATE TABLE coords (
                 coord_id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
                 x DECIMAL(3, 9) NOT NULL,
                 y DECIMAL(3, 9) NOT NULL,
                 z DECIMAL(3, 9) NOT NULL
             );
+            """)
+            cursor.execute("""
             CREATE TABLE mower_areas (
                 area_id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
                 user_no INT UNSIGNED NOT NULL,
@@ -81,11 +87,15 @@ class MowerDatabase:
                 area_notes TEXT NULL,
                 FOREIGN KEY (user_no) REFERENCES users (user_no)
             );
+            """)
+            cursor.execute("""
             CREATE TABLE nogo_zones (
                 nogo_id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
                 area_id INT UNSIGNED NOT NULL,
                 FOREIGN KEY (area_id) REFERENCES mower_areas (area_id)
             );
+            """)
+            cursor.execute("""
             CREATE TABLE area_coords (
                 coord_id INT UNSIGNED NOT NULL,
                 area_id INT UNSIGNED NOT NULL,
@@ -93,6 +103,8 @@ class MowerDatabase:
                 FORIEGN KEY (coord_id) REFERENCES coords (coord_id),
                 FOREIGN KEY (area_id) REFERENCES mower_areas (area_id)
             );
+            """)
+            cursor.execute("""
             CREATE TABLE nogo_coords (
                 coord_id INT UNSIGNED NOT NULL,
                 nogo_id INT UNSIGNED NOT NULL,
