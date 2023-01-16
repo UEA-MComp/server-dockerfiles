@@ -128,8 +128,9 @@ class MowerDatabase:
         with self.__connection.cursor() as cursor:
             cursor.execute("""
             INSERT INTO users (email, fname, sname, pw_hash)
-            VALUES (%s, %s %s, %s);
+            VALUES (%s, %s, %s, %s);
             """, (email, fname, sname, pw_hashed, ))
+        self.__connection.commit()
 
         return self.authenticate_user(email, pw_hashed)
 
@@ -138,6 +139,6 @@ class MowerDatabase:
             cursor.execute("""
             SELECT user_no FROM users WHERE email = %s AND pw_hash = %s;
             """, (email, pw_hashed, ))
-            user_id = self.cursor.fetchone()[0]
+            user_id = cursor.fetchone()[0]
 
             print(user_id)
