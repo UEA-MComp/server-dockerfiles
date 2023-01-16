@@ -129,6 +129,19 @@ class MowerDatabase:
             return self.__connection
 
     def create_user(self, email, fname, sname, pw_hashed):
+        """Appends a user to the database, then returns a new session id for this user.
+
+        # TODO: Throw some sort of exception if the email already exists
+
+        Arguments:
+            email {str} -- The user's email
+            fname {str} -- The user's first name
+            sname {str} -- The user's surname
+            pw_hashed {str} -- The user's password, already hashed as SHA256
+
+        Returns:
+            (str, datetime) -- A session id for this new user, with an expiration datetime (see ``authenticate_user``)
+        """
         with self.__connection.cursor() as cursor:
             cursor.execute("""
             INSERT INTO users (email, fname, sname, pw_hash)
@@ -139,6 +152,18 @@ class MowerDatabase:
         return self.authenticate_user(email, pw_hashed)
 
     def authenticate_user(self, email, pw_hashed, client_info = 'API Client'):
+        """Returns a new session id for a given username and password.
+
+        Arguments:
+            email {str} -- The user's email
+            pw_hashed {str} -- A user's password associated with that email, hashed as SHA256
+
+        Raises:
+            UnauthenticatedUserException -- If the username isn't found or the password is wrong
+
+        Returns:
+            (str, datetime) -- A tuple consisting of a session id, and its associated expiry datetime
+        """
         with self.__connection.cursor() as cursor:
             cursor.execute("""
             SELECT user_no FROM users WHERE email = %s AND pw_hash = %s;
