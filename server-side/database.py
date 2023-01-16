@@ -105,11 +105,11 @@ class MowerDatabase:
             CREATE TABLE area_coords (
                 coord_id INT UNSIGNED NOT NULL,
                 area_id INT UNSIGNED NOT NULL,
-                FORIEGN KEY (coord_id) REFERENCES coords (coord_id),
-                FOREIGN KEY (area_id) REFERENCES mower_areas (area_id),
                 PRIMARY KEY (coord_id, area_id)
             );
             """)
+            cursor.execute("ALTER TABLE area_coords ADD FOREIGN KEY (area_id) REFERENCES mower_areas (area_id);")
+            cursor.execute("ALTER TABLE area_coords ADD FOREIGN KEY (coord_id) REFERENCES coords (coord_id);")
             cursor.execute("""
             CREATE TABLE nogo_coords (
                 coord_id INT UNSIGNED NOT NULL,
