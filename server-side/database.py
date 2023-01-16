@@ -155,9 +155,16 @@ class MowerDatabase:
                 (session_id, user_id, expiration_dt, client_info), 
             )
 
-
         self.__connection.commit()
-        return session_id, expiration_dt    
+        return session_id, expiration_dt
+
+    def authenticate_session(self, session_id):
+        with self.__connection.cursor() as cursor:
+            cursor.execute("""
+            SELECT email, fname, sname FROM users WHERE user_no = (
+                SELECT user_no FROM sessions WHERE cookie_bytes = %s
+            );""", (session_id, ))
+            print(cursor.fetchone())    
 
 class UnauthenticatedUserException(Exception):
     pass

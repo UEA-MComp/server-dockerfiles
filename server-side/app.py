@@ -14,6 +14,7 @@ if __name__ == "__main__":
         host = "db"
 
     with database.MowerDatabase(host = host) as db:
-        db.create_user("gae19jtu@uea.ac.uk", "Eden", "Attenborough", hash_pw("password"))
+        # db.create_user("gae19jtu@uea.ac.uk", "Eden", "Attenborough", hash_pw("password"))
 
-        print(db.authenticate_user("gae19jtu@uea.ac.uk", hash_pw("password")))
+        session_id, expires_at = db.authenticate_user("gae19jtu@uea.ac.uk", hash_pw("password"))
+        print(db.authenticate_session(session_id))
