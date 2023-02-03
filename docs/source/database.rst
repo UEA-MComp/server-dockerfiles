@@ -11,6 +11,7 @@ Classes
 .. autoclass:: database.MowerDatabase
    :members:
    :special-members:
+   :undoc-members:
 
 Exceptions
 **********

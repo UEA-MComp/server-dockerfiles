@@ -11,6 +11,7 @@ Welcome to Mower's documentation!
 
    database.rst
    models.rst
+   api.rst
 
 
 Indices and tables

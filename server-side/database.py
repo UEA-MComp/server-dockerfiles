@@ -29,7 +29,7 @@ class MowerDatabase:
         try:
             self.__connection = self.__get_connection()
         except Exception as e:
-            print(e.args[1])
+            print(e)
             if e.args[0] == 1049:
                 self.__connection = self.__build_db()
         return self
@@ -86,12 +86,9 @@ class MowerDatabase:
             cursor.execute("""
             CREATE TABLE coords (
                 coord_id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-                x_whole INT NOT NULL,
-                x_decimal BIGINT UNSIGNED NOT NULL,
-                y_whole INT NOT NULL,
-                y_decimal BIGINT UNSIGNED NOT NULL,
-                z_whole INT NOT NULL,
-                z_decimal BIGINT UNSIGNED NOT NULL
+                x VARCHAR(20) NOT NULL,
+                y VARCHAR(20) NOT NULL,
+                z VARCHAR(20) NOT NULL
             );
             """)
             cursor.execute("""
@@ -180,7 +177,7 @@ class MowerDatabase:
 
             session_id = secrets.token_hex(16)
             expiration_dt = datetime.datetime.now() + SESSION_LENGTH
-            print(session_id, expiration_dt)
+            # print(session_id, expiration_dt)
             cursor.execute("INSERT INTO sessions (cookie_bytes, user_no, expire_at, client_info) VALUES (%s, %s, %s, %s);",
                 (session_id, user_id, expiration_dt, client_info), 
             )
@@ -202,15 +199,64 @@ class MowerDatabase:
         """
         with self.__connection.cursor() as cursor:
             cursor.execute("""
-            SELECT email, fname, sname FROM users WHERE user_no = (
+            SELECT users.user_no, email, fname, sname FROM users WHERE user_no = (
                 SELECT user_no FROM sessions WHERE cookie_bytes = %s
             );""", (session_id, ))
             try:
-                email, fname, sname = cursor.fetchone()
+                id_, email, fname, sname = cursor.fetchone()
             except:
                 raise InvalidSessionException("The session id '%s' was not found in the database." % session_id)
 
-        return models.User(email, fname, sname)
+        return models.User(id_, email, fname, sname)
+
+    def create_area(self, area: models.Area):
+        with self.__connection.cursor() as cursor:
+            cursor.execute(
+                "INSERT INTO mower_areas (user_no, area_name, area_notes) VALUES (%s, %s, %s)", 
+                (area.owner.id_, area.name, area.notes)
+            )
+            area_id = cursor.lastrowid
+
+            for x, y, z in area.area_coords:
+                cursor.execute(
+                    """
+                    INSERT INTO coords (x, y, z)
+                    VALUES (%s, %s, %s)
+                    """,
+                    (str(x), str(y), str(z))
+                )
+                coord_id = cursor.lastrowid
+
+                cursor.execute(
+                    "INSERT INTO area_coords VALUES (%s, %s);",
+                    (coord_id, area_id)
+                )
+
+            for nogo_zone in area.nogo_zones:
+
+                cursor.execute(
+                    "INSERT INTO nogo_zones (area_id) VALUES (%s);",
+                    (area_id, )
+                )
+                nogo_id = cursor.lastrowid
+
+                for x, y, z in nogo_zone:
+                    cursor.execute(
+                        """
+                        INSERT INTO coords (x, y, z)
+                        VALUES (%s, %s, %s)
+                        """,
+                        (str(x), str(y), str(z))
+                    )
+                    coord_id = cursor.lastrowid
+
+                    cursor.execute(
+                        "INSERT INTO nogo_coords VALUES (%s, %s);",
+                        (coord_id, nogo_id)
+                    )
+
+
+        self.__connection.commit()
 
 class UnauthenticatedUserException(Exception):
     pass
