@@ -1,7 +1,10 @@
+from paste.translogger import TransLogger
 import database
+import waitress
 import hashlib
 import models
 import flask
+import sys
 import os
 
 app = flask.Flask(__name__)
@@ -16,21 +19,51 @@ else:
 def hash_pw(pw):
     return hashlib.sha256(pw.encode()).hexdigest()
 
+def authenticate():
+    if flask.request.cookies.get("session") is None:
+        return flask.abort(401)
+    with database.MowerDatabase(host = db_host) as db:
+        try:
+            return db.authenticate_session(flask.request.cookies.get("session"))
+        except database.InvalidSessionException as e:
+            return flask.abort(401)
+
 @app.route("/api/signin", methods = ["POST"])
 def signin():
-    """Signin api endpoint. POST request at ``/api/signin``, must be a
+    """
+    +----------+------------------+
+    |          | API Endpoint     |
+    +==========+==================+
+    | Endpoint | ``/api/signin``  |
+    +----------+------------------+
+    | Method   | POST             |
+    +----------+------------------+
+    | Cookie   | **No**           |
+    +----------+------------------+
+    
+    Signin api endpoint. POST request at ``/api/signin``, must be a
     JSON object with exactly the keys ``'pass', 'sname', 'fname', 'email'``.
+    Returns a session cookie which can be used for subsequent requests.
 
     Example curl request:
 
     .. code-block:: bash
 
-        curl -X POST -F 'email=gae19jtu@uea.ac.uk' -F 'fname=Eden' -F 'sname=Attenborough' -F 'pass=password' http://127.0.0.1:2004/api/signin
+        curl -H "Content-Type: application/json" --request POST --data '{"email":"gae19jtu@uea.ac.uk", "sname":"Attenborough", "pass":"password", "fname":"Eden"}' http://127.0.0.1:2004/api/signin
+
+    Example valid result content:
+
+    .. code-block:: json
+
+        {
+            "valid": "authentication successful"
+        }
 
     """
-    req = dict(flask.request.form)
+    req = flask.request.json
+    print(req)
     if set(req.keys()) != {'pass', 'sname', 'fname', 'email'}:
-        return flask.abort(400)
+        return flask.abort(400, "The JSON keys {'pass', 'sname', 'fname', 'email'} are required")
 
     with database.MowerDatabase(host = db_host) as db:
         try:
@@ -38,13 +71,124 @@ def signin():
         except database.UnauthenticatedUserException as e:
             return flask.abort(401)
 
-    resp = flask.make_response(flask.jsonify({"poggers": "authentication successful"}))
+    resp = flask.make_response(flask.jsonify({"valid": "authentication successful"}))
     resp.set_cookie("session", value = session_id, expires = expires_at)
 
     return resp
 
+@app.route("/api/getuser")
+def getuser():
+    """
+
+    +----------+------------------+
+    |          | API Endpoint     |
+    +==========+==================+
+    | Endpoint | ``/api/getuser`` |
+    +----------+------------------+
+    | Method   | GET              |
+    +----------+------------------+
+    | Cookie   | **YES**          |
+    +----------+------------------+
+
+    Gets the user associated with the given session cookie.
+
+    Example curl request:
+
+    .. code-block:: bash
+
+        curl --cookie "session=b98071db4e4ff3e33b92d77647ec9d59" http://127.0.0.1:2004/api/getuser
+
+    Example valid result JSON:
+
+    .. code-block:: json
+
+        {
+            "email": "gae19jtu@uea.ac.uk", 
+            "fname": "Eden", 
+            "id_": 1, 
+            "sname": "Attenborough"
+        }
+
+    """
+    # args = flask.request.args.to_dict()
+    user = authenticate()
+    return user.serialize()
+
+@app.route("/api/addarea", methods = ["POST"])
+def addarea():
+    """
+    +----------+------------------+
+    |          | API Endpoint     |
+    +==========+==================+
+    | Endpoint | ``/api/addarea`` |
+    +----------+------------------+
+    | Method   | POST             |
+    +----------+------------------+
+    | Cookie   | **Yes**          |
+    +----------+------------------+
+
+    Appends a mower area to the database. Example POST JSON:
+
+    .. code-block:: json
+        :linenos:
+
+        {
+            "name": "Besides the lake", 
+            "notes": "Besides the lake, avoiding the trees, left of the pond", 
+            "area_coords": [
+                [52.619274360887445, 24.0, 1.2393361009732562], 
+                [52.619274360423944, 24.0, 1.2393361009734234], 
+                [52.61927259385035, 24.0, 1.2346346239823422]
+            ], 
+            "nogo_zones": [
+                [
+                    [52.619534542345434, 24.0, 1.2393352345423454], 
+                    [52.61927234523454, 24.0, 1.2393234523452346], 
+                    [52.62345423452346, 24.0, 1.2334523452345234]
+                ], [
+                    [52.619534542345434, 24.0, 1.2393352345423454], 
+                    [52.61927234523454, 24.0, 1.2393234523452346], 
+                    [52.62345423452346, 24.0, 1.2334523452345234]
+                ]
+            ]
+        }
+
+    A nice way to get this JSON is to use :func:`models.Area.serialize`. See
+    :class:`models.Area` for an example model class instantiation.
+
+    Example curl request:
+
+    .. code-block:: bash
+
+        curl --cookie "session=b98071db4e4ff3e33b92d77647ec9d59" -H "Content-Type: application/json" --request POST --data '{"name": "Besides the lake", "notes": "Notes", "area_coords": [], "nogo_zones": []}' http://127.0.0.1:2004/api/addarea
+
+    Example successful JSON response:
+    
+    .. code-block:: json
+
+        {
+            "success": "Area 'Besides the lake' added"
+        }
+
+    """
+    req = flask.request.json
+    user = authenticate()
+    try:
+        area = models.deserialize(req, models.Area, owner = user)
+    except Exception as e:
+        return flask.abort(400, e.args)
+    with database.MowerDatabase(host = db_host) as db:
+        db.create_area(area)
+    return {"success": "Area '%s' added" % area.name}
+
 if __name__ == "__main__":
-    app.run(host = "0.0.0.0", port = 2004, debug = True)
+    try:
+        if sys.argv[1] == "--production":
+            waitress.serve(TransLogger(app), host = "0.0.0.0", port = 2005, threads = 4)
+        else:
+            app.run(host = "0.0.0.0", port = 2004, debug = True)
+    except IndexError:
+        app.run(host = "0.0.0.0", port = 2004, debug = True)
 
 # if __name__ == "__main__":
 

@@ -29,6 +29,8 @@ services:
         build:
             context: ./server-side
             dockerfile: Dockerfile
+        ports:
+            - 2005:2005
         env_file:
             - db.env
 
