@@ -6,7 +6,7 @@ import os
 scheme = "http"
 host = "mower.awiki.org"
 # host = "127.0.0.1"
-port = 80
+port = 2006
 
 session = requests.Session()
 
