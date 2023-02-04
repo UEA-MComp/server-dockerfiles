@@ -4,9 +4,9 @@ import json
 import os
 
 scheme = "http"
-# host = "192.168.1.9"
-host = "127.0.0.1"
-port = 2004
+host = "mower.awiki.org"
+# host = "127.0.0.1"
+port = 80
 
 session = requests.Session()
 
@@ -18,16 +18,15 @@ if not os.path.exists(".cookies.json"):
     r = session.post("%s://%s:%d/api/signin" % (scheme, host, port), json = {
         "email": "gae19jtu@uea.ac.uk", "fname": "Eden", "sname": "Attenborough", "pass": "floofleberries"
     })
-    with open(".cookies.json", "w") as f:
-        json.dump(r.cookies.get_dict(), f)
 
     # r = session.post("%s://%s:%d/api/adduser" % (scheme, host, port), json = {
     #     "email": "gae19jtu@uea.ac.uk", "fname": "Eden", "sname": "Attenborough", "pass": "floofleberries"
     # })
-    # with open(".cookies.json", "w") as f:
-    #     json.dump(r.cookies.get_dict(), f)
 
-    # print(r.content.decode())
+    with open(".cookies.json", "w") as f:
+        json.dump(r.cookies.get_dict(), f)
+
+    print(r.content.decode())
 
 with open(".cookies.json", "r") as f:
     cookies = json.load(f)
