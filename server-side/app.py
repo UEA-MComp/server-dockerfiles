@@ -44,6 +44,7 @@ def signin():
     Signin api endpoint. POST request at ``/api/signin``, must be a
     JSON object with exactly the keys ``'pass', 'sname', 'fname', 'email'``.
     Returns a session cookie which can be used for subsequent requests.
+    The password is unhashed at this stage.
 
     Example curl request:
 
@@ -56,12 +57,12 @@ def signin():
     .. code-block:: json
 
         {
-            "valid": "authentication successful"
+            "success": "authentication successful"
         }
 
     """
     req = flask.request.json
-    print(req)
+    # print(req)
     if set(req.keys()) != {'pass', 'sname', 'fname', 'email'}:
         return flask.abort(400, "The JSON keys {'pass', 'sname', 'fname', 'email'} are required")
 
@@ -71,7 +72,52 @@ def signin():
         except database.UnauthenticatedUserException as e:
             return flask.abort(401)
 
-    resp = flask.make_response(flask.jsonify({"valid": "authentication successful"}))
+    resp = flask.make_response(flask.jsonify({"success": "authentication successful"}))
+    resp.set_cookie("session", value = session_id, expires = expires_at)
+
+    return resp
+
+@app.route("/api/adduser", methods = ["POST"])
+def adduser():
+    """
+    +----------+------------------+
+    |          | API Endpoint     |
+    +==========+==================+
+    | Endpoint | ``/api/adduser`` |
+    +----------+------------------+
+    | Method   | POST             |
+    +----------+------------------+
+    | Cookie   | **No**           |
+    +----------+------------------+
+
+    Very similar to :func:`signin`, except this creates a new account.
+    Returns a valid session cookie for subsequent requests.
+
+    Example curl request:
+
+    .. code-block:: bash
+
+        curl -v -H "Content-Type: application/json" --request POST --data '{"email":"gae19jtu@uea.ac.uk", "sname":"Attenborough", "pass":"password", "fname":"EdenTwo"}' http://127.0.0.1:2004/api/adduser
+
+    Example JSON response:
+
+    .. code-block:: json
+
+        {
+            "success": "a new user was created and the session cookie returned"
+        }
+
+    """
+
+    req = flask.request.json
+    # print(req)
+    if set(req.keys()) != {'pass', 'sname', 'fname', 'email'}:
+        return flask.abort(400, "The JSON keys {'pass', 'sname', 'fname', 'email'} are required")
+
+    with database.MowerDatabase(host = db_host) as db:
+        session_id, expires_at = db.create_user(req["email"], req["fname"], req["sname"], hash_pw(req["pass"]))
+
+    resp = flask.make_response(flask.jsonify({"success": "a new user was created and the session cookie returned"}))
     resp.set_cookie("session", value = session_id, expires = expires_at)
 
     return resp

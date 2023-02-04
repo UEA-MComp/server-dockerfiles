@@ -4,18 +4,28 @@ import json
 import os
 
 scheme = "http"
+# host = "192.168.1.9"
 host = "127.0.0.1"
 port = 2004
 
 session = requests.Session()
 
-# sign in if no cookies are found, then save the cookies
+
 if not os.path.exists(".cookies.json"):
+    # either sign in or create an account (comment out one or the other)
+
+    # sign in if no cookies are found, then save the cookies
     r = session.post("%s://%s:%d/api/signin" % (scheme, host, port), json = {
-        "email": "gae19jtu@uea.ac.uk", "fname": "Eden", "sname": "Attenborough", "pass": "password"
+        "email": "gae19jtu@uea.ac.uk", "fname": "Eden", "sname": "Attenborough", "pass": "floofleberries"
     })
     with open(".cookies.json", "w") as f:
         json.dump(r.cookies.get_dict(), f)
+
+    # r = session.post("%s://%s:%d/api/adduser" % (scheme, host, port), json = {
+    #     "email": "gae19jtu@uea.ac.uk", "fname": "Eden", "sname": "Attenborough", "pass": "floofleberries"
+    # })
+    # with open(".cookies.json", "w") as f:
+    #     json.dump(r.cookies.get_dict(), f)
 
     # print(r.content.decode())
 
@@ -49,10 +59,10 @@ area = models.Area(
     ]
 )
 
-print(json.dumps(area.serialize(), indent = 4))
+# print(json.dumps(area.serialize(), indent = 4))
 # ser = area.serialize()
 # print(models.deserialize(ser, models.Area, owner = None))
 
-# r = session.post("%s://%s:%d/api/addarea" % (scheme, host, port), cookies = cookies, json = area.serialize())
-# print(r.status_code)
-# print(r.content.decode())
+r = session.post("%s://%s:%d/api/addarea" % (scheme, host, port), cookies = cookies, json = area.serialize())
+print(r.status_code)
+print(r.content.decode())
