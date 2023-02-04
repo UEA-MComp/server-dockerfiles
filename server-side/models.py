@@ -52,8 +52,8 @@ class Area(ModelBase):
     owner: User
     name: str
     notes: str
-    area_coords: list[tuple[float]]
-    nogo_zones: list[list[tuple[float]]]
+    area_coords: list
+    nogo_zones: list
 
     def to_keypairs(self):
         """Alternative serialization method, so that 'true' JSON is returned,

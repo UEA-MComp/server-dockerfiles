@@ -210,6 +210,12 @@ class MowerDatabase:
         return models.User(id_, email, fname, sname)
 
     def create_area(self, area: models.Area):
+        """Append a given :class:`models.Area` to the database. A valid :class:`models.User` 
+        must be set in the area object
+
+        Arguments:
+            area (models.Area): An area to add
+        """
         with self.__connection.cursor() as cursor:
             cursor.execute(
                 "INSERT INTO mower_areas (user_no, area_name, area_notes) VALUES (%s, %s, %s)", 
@@ -258,8 +264,56 @@ class MowerDatabase:
 
         self.__connection.commit()
 
+    def get_areas(self, user: models.User):
+        """Returns a list of all the :class:`models.Area` s associated with a given :class:`models.User`.
+
+        Arguments:
+            user (models.User): A user to get the :class:`models.Area` s for
+        """
+        with self.__connection.cursor() as cursor:
+            cursor.execute("SELECT area_id, area_name, area_notes FROM mower_areas WHERE user_no = %s;", (user.id_, ))
+
+            areas = []
+            for area_id, area_name, area_notes in cursor.fetchall():
+                cursor.execute("""
+                SELECT x, y, z FROM area_coords 
+                INNER JOIN coords ON coords.coord_id = area_coords.coord_id 
+                WHERE area_coords.area_id = %s;
+                """, (area_id, ))
+                coords = str_coords_to_float(cursor.fetchall())
+
+                nogo_zones = []
+                cursor.execute("SELECT nogo_id FROM nogo_zones WHERE area_id = %s;", (area_id, ))
+                for nogo_id in [i[0] for i in cursor.fetchall()]:
+                    cursor.execute("""
+                    SELECT x, y, z FROM nogo_coords 
+                    INNER JOIN coords ON nogo_coords.coord_id = coords.coord_id 
+                    WHERE nogo_id = %s;
+                    """, (nogo_id, ))
+                    nogo_zones.append(str_coords_to_float(cursor.fetchall()))
+
+                areas.append(models.Area(user, area_name, area_notes, coords, nogo_zones))
+
+                # print(area_id, area_name, area_notes)
+                # print(coords)
+                # print(nogo_zones)
+
+                # break
+        
+        return areas
+
+def str_coords_to_float(coords):
+    return [[float(j) for j in i] for i in coords]
+
 class UnauthenticatedUserException(Exception):
     pass
 
 class InvalidSessionException(Exception):
     pass
+
+if __name__ == "__main__":
+    import app
+    with MowerDatabase(host = "192.168.1.5") as db:
+        session, expirey = db.authenticate_user("gae19jtu@uea.ac.uk", app.hash_pw("password"))
+        user = db.authenticate_session(session)
+        print([area.serialize() for area in db.get_areas(user)])

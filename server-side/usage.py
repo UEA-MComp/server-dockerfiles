@@ -4,9 +4,10 @@ import json
 import os
 
 scheme = "http"
-host = "mower.awiki.org"
-# host = "127.0.0.1"
-port = 2006
+# host = "mower.awiki.org"
+# port = 2006
+host = "127.0.0.1"
+port = 2004
 
 session = requests.Session()
 
@@ -62,6 +63,11 @@ area = models.Area(
 # ser = area.serialize()
 # print(models.deserialize(ser, models.Area, owner = None))
 
-r = session.post("%s://%s:%d/api/addarea" % (scheme, host, port), cookies = cookies, json = area.serialize())
+# r = session.post("%s://%s:%d/api/addarea" % (scheme, host, port), cookies = cookies, json = area.serialize())
+# print(r.status_code)
+# print(r.content.decode())
+
+r = session.get("%s://%s:%d/api/getareas" % (scheme, host, port), cookies = cookies)
 print(r.status_code)
-print(r.content.decode())
+# print(r.content.decode())
+print(json.dumps(r.json(), indent=4))

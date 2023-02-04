@@ -133,7 +133,7 @@ def getuser():
     +----------+------------------+
     | Method   | GET              |
     +----------+------------------+
-    | Cookie   | **YES**          |
+    | Cookie   | **Yes**          |
     +----------+------------------+
 
     Gets the user associated with the given session cookie.
@@ -226,6 +226,64 @@ def addarea():
     with database.MowerDatabase(host = db_host) as db:
         db.create_area(area)
     return {"success": "Area '%s' added" % area.name}
+
+@app.route("/api/getareas")
+def getareas():
+    """
+    +----------+------------------+
+    |          | API Endpoint     |
+    +==========+==================+
+    | Endpoint | ``/api/getareas``|
+    +----------+------------------+
+    | Method   | GET              |
+    +----------+------------------+
+    | Cookie   | **Yes**          |
+    +----------+------------------+
+
+    Get a list of the areas associated with the current user. The areas
+    are serialized to JSON (see :func:`models.Area.serialize`).
+
+    Example curl request:
+
+    .. code-block:: bash
+
+        curl --cookie "session=53b5b4baaeb3d5ab8ce4a3dcfd346945" http://127.0.0.1:2004/api/getareas
+
+    Example return JSON data:
+
+    .. code-block:: json
+        :linenos:
+
+        {
+            "areas": [
+                {
+                    "area_coords": [
+                        [52.619274360887445, 24.0, 1.2393361009732562],
+                        [52.619274360423944, 24.0, 1.2393361009734234],
+                        [52.61927259385035, 24.0, 1.2346346239823422]
+                    ],
+                    "name": "Besides the lake",
+                    "nogo_zones": [
+                        [
+                            [52.619534542345434, 24.0, 1.2393352345423454],
+                            [52.61927234523454, 24.0, 1.2393234523452346],
+                            [52.62345423452346, 24.0, 1.2334523452345234]
+                        ],
+                        [
+                            [52.619534542345434, 24.0, 1.2393352345423454],
+                            [52.61927234523454, 24.0, 1.2393234523452346],
+                            [52.62345423452346, 24.0, 1.2334523452345234]
+                        ]
+                    ],
+                    "notes": "Besides the lake, avoiding the trees, left of the pond"
+                }
+            ]
+        }
+
+    """
+    user = authenticate()
+    with database.MowerDatabase(host = db_host) as db:
+        return {"areas": [area.serialize() for area in db.get_areas(user)]}
 
 if __name__ == "__main__":
     try:
