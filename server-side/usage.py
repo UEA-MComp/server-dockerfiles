@@ -4,10 +4,10 @@ import json
 import os
 
 scheme = "http"
-# host = "mower.awiki.org"
-# port = 2006
-host = "127.0.0.1"
-port = 2004
+host = "mower.awiki.org"
+port = 2006
+# host = "127.0.0.1"
+# port = 2004
 
 session = requests.Session()
 

@@ -12,6 +12,7 @@ Welcome to Mower's documentation!
    database.rst
    models.rst
    api.rst
+   rtklib.rst
 
 
 Indices and tables
