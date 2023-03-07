@@ -357,6 +357,20 @@ class MowerDatabase:
             cursor.execute("UPDATE nmea_logs SET last_updated = NOW() WHERE path = %s;", (path, ))
         self.__connection.commit()
 
+    def append_telemetry(self, iqn: str, timestamp, x, y, z):
+        with self.__connection.cursor() as cursor:
+            cursor.execute(
+                """
+                INSERT INTO coords (x, y, z)
+                VALUES (%s, %s, %s)
+                """,
+                (str(x), str(y), str(z))
+            )
+            coord_id = cursor.lastrowid
+
+            cursor.execute("INSERT INTO telemetry VALUES (%s, %s, %s);", (iqn, timestamp, coord_id))
+        self.__connection.commit()
+
 def str_coords_to_float(coords):
     return [[float(j) for j in i] for i in coords]
 
@@ -372,6 +386,7 @@ if __name__ == "__main__":
         # print(db.create_user("gae19jtu@uea.ac.uk", "Eden", "Attenborough", app.hash_pw("passwd")))
         session_id = "e9f6fd2d70c4365ac1fc483101389f54"
         # db.append_mowers(db.authenticate_session(session_id), "iqn.2004-10.com.ubuntu:01:bb98777ca2f4", "10.13.13.2")
-        for i in range(100):
-            sentence = b"hewwo worrd uwuwu %d\r\n" % i
-            db.append_nmea_logfile(sentence,"iqn.2004-10.com.ubuntu:01:bb98777ca2f4", "/home/pi/logs")
+        # for i in range(100):
+        #     sentence = b"hewwo worrd uwuwu %d\r\n" % i
+        #     db.append_nmea_logfile(sentence,"iqn.2004-10.com.ubuntu:01:bb98777ca2f4", "/home/pi/logs")
+        db.append_telemetry("iqn.2004-10.com.ubuntu:01:bb98777ca2f4", datetime.datetime.now(), 52.6295245717, -19.703, 1.2696029833)
