@@ -125,6 +125,34 @@ class MowerDatabase:
                 FOREIGN KEY (nogo_id) REFERENCES nogo_zones (nogo_id)
             );
             """)
+            cursor.execute("""
+            CREATE TABLE mowers (
+                iqn VARCHAR(50) PRIMARY KEY NOT NULL,
+                vpn_ip CHAR(11) NOT NULL,
+                owner INT UNSIGNED NOT NULL,
+                FOREIGN KEY (owner) REFERENCES users (user_no)
+            );
+            """)
+            cursor.execute("""
+            CREATE TABLE nmea_logs (
+                mower VARCHAR(50) NOT NULL,
+                created_at DATETIME NOT NULL DEFAULT NOW(),
+                last_updated DATETIME NOT NULL DEFAULT NOW(),
+                path VARCHAR(100) NOT NULL,
+                FOREIGN KEY (mower) REFERENCES mowers(iqn),
+                PRIMARY KEY(mower, created_at)
+            );
+            """)
+            cursor.execute("""
+            CREATE TABLE telemetry (
+                mower VARCHAR(50) NOT NULL,
+                recv_at DATETIME NOT NULL,
+                coord INT UNSIGNED NOT NULL,
+                FOREIGN KEY (mower) REFERENCES mowers(iqn),
+                FOREIGN KEY (coord) REFERENCES coords(coord_id),
+                PRIMARY KEY (mower, recv_at)
+            );
+            """)
 
             self.__connection.commit()
             return self.__connection
@@ -302,6 +330,33 @@ class MowerDatabase:
         
         return areas
 
+    def append_mowers(self, user: models.User, iqn: str, vpn_ip: str):
+        with self.__connection.cursor() as cursor:
+            cursor.execute("INSERT INTO mowers VALUES (%s, %s, %s);", (iqn, vpn_ip, user.id_))
+        self.__connection.commit()
+
+    def get_nmea_logfile(self, iqn: str, basedir: str, max_age: int = 60):
+        with self.__connection.cursor() as cursor:
+            cursor.execute("SELECT path FROM nmea_logs WHERE TIMESTAMPDIFF(SECOND, last_updated, NOW()) <= %s;", (max_age, ))
+            o = cursor.fetchone()
+            if o is not None:
+                return o[0]
+
+            now = datetime.datetime.now()
+            nmea_path = os.path.join(basedir, "%s_%s.nmea" % (iqn, now.isoformat()))
+            cursor.execute("INSERT INTO nmea_logs (mower, created_at, path) VALUES (%s, %s, %s);", (iqn, now, nmea_path))
+        self.__connection.commit()
+        return nmea_path
+
+    def append_nmea_logfile(self, sentence, iqn: str, basedir: str, max_age: int = 60):
+        path = self.get_nmea_logfile(iqn, basedir, max_age)
+        with open(path, "ab") as f:
+            f.write(sentence)
+
+        with self.__connection.cursor() as cursor:
+            cursor.execute("UPDATE nmea_logs SET last_updated = NOW() WHERE path = %s;", (path, ))
+        self.__connection.commit()
+
 def str_coords_to_float(coords):
     return [[float(j) for j in i] for i in coords]
 
@@ -314,6 +369,9 @@ class InvalidSessionException(Exception):
 if __name__ == "__main__":
     import app
     with MowerDatabase(host = "192.168.1.5") as db:
-        session, expirey = db.authenticate_user("gae19jtu@uea.ac.uk", app.hash_pw("password"))
-        user = db.authenticate_session(session)
-        print([area.serialize() for area in db.get_areas(user)])
+        # print(db.create_user("gae19jtu@uea.ac.uk", "Eden", "Attenborough", app.hash_pw("passwd")))
+        session_id = "e9f6fd2d70c4365ac1fc483101389f54"
+        # db.append_mowers(db.authenticate_session(session_id), "iqn.2004-10.com.ubuntu:01:bb98777ca2f4", "10.13.13.2")
+        for i in range(100):
+            sentence = b"hewwo worrd uwuwu %d\r\n" % i
+            db.append_nmea_logfile(sentence,"iqn.2004-10.com.ubuntu:01:bb98777ca2f4", "/home/pi/logs")
