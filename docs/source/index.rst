@@ -8,6 +8,7 @@ Welcome to Mower's documentation!
 
 .. toctree:: 
    :caption: Code documentation
+   :maxdepth: 1
 
    database.rst
    models.rst

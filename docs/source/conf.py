@@ -13,9 +13,7 @@
 import os
 import sys
 sys.path.insert(0, os.path.abspath(os.path.join("..", "..", "server-side")))
-sys.path.insert(1, os.path.abspath(os.path.join("..", "..", "..", "telemetry", "src", "telemetry", "telemetry")))
-
-print(os.path.abspath(os.path.join("..", "..", "..", "telemetry", "src", "telemetry", "telemetry")))
+sys.path.insert(1, os.path.abspath(os.path.join("..", "..", "..", "telemetry")))
 
 todo_include_todos = True
 todo_emit_warnings = True
