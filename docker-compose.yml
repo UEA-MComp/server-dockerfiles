@@ -23,6 +23,10 @@ services:
             context: ./ros
             dockerfile: Dockerfile
         network_mode: service:wireguard
+        volumes:
+            - /home/mcomp/logs:/logs
+        env_file:
+            - db.env
 
     server-side:
         image: mower/serverside
