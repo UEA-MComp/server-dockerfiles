@@ -153,7 +153,7 @@ class Area(ModelBase):
         del out["owner"]
         return out
 
-def deserialize(json_: dict, type_: type[ModelBase], **kwargs):
+def deserialize(json_: dict, type_: type, **kwargs):
     """
     Deserialize a given JSON dictionary into type ``type_``.
     If any information was lost in serialization, add it back in ``**kwargs``;

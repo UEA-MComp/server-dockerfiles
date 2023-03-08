@@ -382,11 +382,11 @@ class InvalidSessionException(Exception):
 
 if __name__ == "__main__":
     import app
-    with MowerDatabase(host = "192.168.1.5") as db:
+    with MowerDatabase(host = "192.168.1.9") as db:
         # print(db.create_user("gae19jtu@uea.ac.uk", "Eden", "Attenborough", app.hash_pw("passwd")))
-        session_id = "e9f6fd2d70c4365ac1fc483101389f54"
-        # db.append_mowers(db.authenticate_session(session_id), "iqn.2004-10.com.ubuntu:01:bb98777ca2f4", "10.13.13.2")
+        session_id = "c3c4ebdcb7d05cae92aaa465054f1c4d"
+        db.append_mowers(db.authenticate_session(session_id), "iqn.2004-10.com.ubuntu:01:bb98777ca2f4", "10.13.13.2")
         # for i in range(100):
         #     sentence = b"hewwo worrd uwuwu %d\r\n" % i
         #     db.append_nmea_logfile(sentence,"iqn.2004-10.com.ubuntu:01:bb98777ca2f4", "/home/pi/logs")
-        db.append_telemetry("iqn.2004-10.com.ubuntu:01:bb98777ca2f4", datetime.datetime.now(), 52.6295245717, -19.703, 1.2696029833)
+        #db.append_telemetry("iqn.2004-10.com.ubuntu:01:bb98777ca2f4", datetime.datetime.now(), 52.6295245717, -19.703, 1.2696029833)

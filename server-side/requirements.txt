@@ -1,6 +1,6 @@
-Flask==2.1.0
+Flask
 PasteScript==3.3.0
 PyMySQL==1.0.2
-python-dotenv==0.21.1
-requests==2.28.1
-waitress==2.1.1
+python-dotenv
+requests
+waitress
